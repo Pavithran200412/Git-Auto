@@ -1,0 +1,81 @@
+# =============================================================================
+# Automated Daily Contribution Workflow
+# =============================================================================
+# This workflow creates a daily commit by appending the current UTC timestamp
+# to daily-log.txt. It ensures your GitHub contribution graph stays active.
+#
+# Schedule : Every day at 00:00 UTC (midnight)
+# Manual   : Can also be triggered manually via "Run workflow" in the Actions tab
+# =============================================================================
+
+name: Daily Auto-Commit
+
+on:
+  # ── Cron schedule ──────────────────────────────────────────────────────────
+  # Runs at midnight UTC every day.
+  # Cron syntax: minute hour day-of-month month day-of-week
+  #
+  # Examples:
+  #   "0 0 * * *"    → Every day at 00:00 UTC
+  #   "0 */6 * * *"  → Every 6 hours
+  #   "30 5 * * 1-5" → Weekdays at 05:30 UTC
+  #   "0 12 * * 0"   → Sundays at 12:00 UTC
+  #
+  # GitHub may delay scheduled runs by up to 15–60 minutes under heavy load.
+  schedule:
+    - cron: "0 0 * * *"
+
+  # ── Manual trigger ─────────────────────────────────────────────────────────
+  # Allows running this workflow on-demand from the Actions tab.
+  workflow_dispatch:
+
+# ── Permissions ──────────────────────────────────────────────────────────────
+# The workflow needs write access to push commits back to the repository.
+permissions:
+  contents: write
+
+jobs:
+  auto-commit:
+    name: Update daily log
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── Step 1: Checkout the repository ────────────────────────────────────
+      # Fetches the repo so we can read/write files and push changes.
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Use the default GITHUB_TOKEN; it has write access per the
+          # permissions block above.
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── Step 2: Configure Git identity ─────────────────────────────────────
+      # Uses the official GitHub Actions bot identity so commits are
+      # attributed correctly and count toward the contribution graph.
+      - name: Configure Git credentials
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # ── Step 3: Update the daily log file ──────────────────────────────────
+      # Appends the current UTC timestamp to daily-log.txt.
+      # The file is created automatically if it does not yet exist.
+      - name: Update daily-log.txt
+        run: |
+          echo "Auto-commit: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> daily-log.txt
+
+      # ── Step 4: Commit and push ────────────────────────────────────────────
+      # Stages all changes, commits with a descriptive message, and pushes.
+      # The `git diff --cached --quiet` check ensures we skip the commit
+      # gracefully when there are no actual changes (prevents workflow failure).
+      - name: Commit and push changes
+        run: |
+          git add daily-log.txt
+          # Check if there are staged changes before committing
+          if git diff --cached --quiet; then
+            echo "ℹ️  No changes to commit. Skipping."
+          else
+            git commit -m "chore: daily auto-commit — $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+            git push
+            echo "✅ Changes committed and pushed successfully."
+          fi
