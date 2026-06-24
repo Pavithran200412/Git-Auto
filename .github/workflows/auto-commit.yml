@@ -54,8 +54,8 @@ jobs:
       # attributed correctly and count toward the contribution graph.
       - name: Configure Git credentials
         run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name  "Pavithran200412"
+          git config user.email "s.pavithran.comp2020@gmail.com"
 
       # ── Step 3: Update the daily log file ──────────────────────────────────
       # Appends the current UTC timestamp to daily-log.txt.
