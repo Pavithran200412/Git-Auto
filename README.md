@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project uses a GitHub Actions workflow to make a daily commit automatically, keeping your GitHub contribution graph active. The workflow appends a UTC timestamp to `daily-log.txt` every day at midnight UTC.
+This project uses a GitHub Actions workflow to make **4 commits per day** automatically, keeping your GitHub contribution graph active. The workflow appends a UTC timestamp to `daily-log.txt` every 6 hours (00:00, 06:00, 12:00, 18:00 UTC).
 
 ---
 
@@ -53,19 +53,20 @@ The schedule is controlled by the `cron` expression in the workflow file:
 
 ```yaml
 schedule:
-  - cron: "0 0 * * *"   # current: every day at 00:00 UTC
+  - cron: "0 */6 * * *"   # current: every 6 hours (4 commits/day)
 ```
 
 ### Common cron patterns
 
-| Schedule | Cron Expression |
-|---|---|
-| Every day at midnight UTC | `0 0 * * *` |
-| Every 6 hours | `0 */6 * * *` |
-| Twice a day (06:00 & 18:00 UTC) | `0 6,18 * * *` |
-| Weekdays only at 09:00 UTC | `0 9 * * 1-5` |
-| Every Sunday at noon UTC | `0 12 * * 0` |
-| Every 8 hours on weekdays | `0 */8 * * 1-5` |
+| Schedule | Cron Expression | Commits/Day |
+|---|---|---|
+| Every day at midnight UTC | `0 0 * * *` | 1 |
+| Every 12 hours | `0 0,12 * * *` | 2 |
+| Every 8 hours | `0 */8 * * *` | 3 |
+| **Every 6 hours (current)** | **`0 */6 * * *`** | **4** |
+| Every 4 hours | `0 */4 * * *` | 6 |
+| Every 3 hours | `0 */3 * * *` | 8 |
+| Weekdays only, every 6 hours | `0 */6 * * 1-5` | 4 (weekdays) |
 
 ### Cron field reference
 
@@ -160,7 +161,7 @@ Git-Auto/
 
 ```mermaid
 graph LR
-    A["⏰ Cron trigger<br/>00:00 UTC daily"] --> B["📥 Checkout repo"]
+    A["⏰ Cron trigger<br/>Every 6 hours"] --> B["📥 Checkout repo"]
     B --> C["🔧 Configure Git<br/>identity"]
     C --> D["📝 Append timestamp<br/>to daily-log.txt"]
     D --> E{"Changes<br/>detected?"}
@@ -168,7 +169,7 @@ graph LR
     E -- No --> G["⏭️ Skip gracefully"]
 ```
 
-1. **Trigger** — The workflow runs on a daily cron schedule (or manually).
+1. **Trigger** — The workflow runs every 6 hours — 4 times per day (or manually).
 2. **Checkout** — The repository is cloned into the runner.
 3. **Git config** — The bot's identity is set so commits are properly attributed.
 4. **Update file** — A UTC timestamp is appended to `daily-log.txt`.
